@@ -4,7 +4,8 @@ test: check
 	pytest -s
 
 watch:
-	when-changed -r drt make
+	#when-changed -r drt make
+	while inotifywait -r -e close_write tests drt; do make test;done;
 
 watchtest:
 	when-changed -r tests make

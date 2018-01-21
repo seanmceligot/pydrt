@@ -3,29 +3,34 @@ import subprocess
 import shutil
 import enum
 
-from typing import List, Iterable, Tuple
+from typing import List, Set, Dict, Tuple, Optional
 from pydantic import BaseModel
 from typing import Union
 
 
-class LocalFile():
-    def __init__(self, path):
-        self.path = path
+class File(BaseModel):
+    path: str
 
 
-class RemoteFile():
-    def __init__(self, path):
-        # type: (str) -> None
-        self.path = path
+class RemoteFile(File):
+    pass
+
+
+class LocalFile(File):
+    pass
 
 
 class Transport():
     pass
 
 
+class Text(BaseModel):
+    text: str
+
+
 class SrcDest(BaseModel):
-    src: str
-    dest: str
+    src: File
+    dest: File
 
 
 class ExecResult(BaseModel):
@@ -43,7 +48,7 @@ class Action(enum.IntFlag):
 
 class DiffResult(BaseModel):
     result: Action
-    diff: ExecResult
+    diff: Optional[ExecResult]
 
 
 class LocalTransport(Transport):
@@ -71,18 +76,23 @@ class LocalTransport(Transport):
         return ExecResult(**r)
 
     def to_remote_file(self, lfile) -> RemoteFile:
-        return RemoteFile(lfile.path)
+        return RemoteFile(path=lfile.path)
+
+    def createfile(self, text: Text, dest: RemoteFile) -> RemoteFile:
+        with open(dest.path, "w") as f:
+            print(text.text, file=f)
+        return dest
 
     def copy(self, srcdest: SrcDest) -> RemoteFile:
-        shutil.copyfile(srcdest.src, srcdest.dest)
-        return RemoteFile(srcdest.dest)
+        shutil.copyfile(srcdest.src.path, srcdest.dest.path)
+        return srcdest.dest
 
-    def diff(self, r1, r2) -> DiffResult:
+    def diff(self, r1: File, r2: File) -> DiffResult:
         """ result=diff: patch: text"""
         """ result=create: """
 
         if not os.path.exists(r2.path):
-            return DiffResult(result="create")
+            return DiffResult(result=Action.Create, diff=None)
         r = self.run("diff", [r1.path, r2.path])
         if r.returncode == 0:
             return DiffResult(result=Action.Done, diff=r)
