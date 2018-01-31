@@ -4,11 +4,12 @@ import shutil
 import enum
 
 from typing import List, Set, Dict, Tuple, Optional
-from pydantic import BaseModel
+from typing import NamedTuple
+
 from typing import Union
 
 
-class File(BaseModel):
+class File(NamedTuple):
     path: str
 
 
@@ -24,16 +25,16 @@ class Transport():
     pass
 
 
-class Text(BaseModel):
+class Text(NamedTuple):
     text: str
 
 
-class SrcDest(BaseModel):
-    src: File
-    dest: File
+class SrcDest(NamedTuple):
+    src: LocalFile
+    dest: LocalFile
 
 
-class ExecResult(BaseModel):
+class ExecResult(NamedTuple):
     args: str
     returncode: int
     stderr: str
@@ -46,7 +47,7 @@ class Action(enum.IntFlag):
     Create = 3
 
 
-class DiffResult(BaseModel):
+class DiffResult(NamedTuple):
     result: Action
     diff: Optional[ExecResult]
 
@@ -75,15 +76,19 @@ class LocalTransport(Transport):
         # print("r", json.dumps(r, indent=2))
         return ExecResult(**r)
 
-    def to_remote_file(self, lfile) -> RemoteFile:
+    def to_remote_file(self, lfile: File) -> RemoteFile:
         return RemoteFile(path=lfile.path)
 
-    def createfile(self, text: Text, dest: RemoteFile) -> RemoteFile:
+    def readfile(self, path: File) -> Text:
+        with open(path.path, "r") as f:
+            return Text(text=f.read())
+
+    def createfile(self, text: Text, dest: LocalFile) -> LocalFile:
         with open(dest.path, "w") as f:
             print(text.text, file=f)
         return dest
 
-    def copy(self, srcdest: SrcDest) -> RemoteFile:
+    def copy(self, srcdest: SrcDest) -> LocalFile:
         shutil.copyfile(srcdest.src.path, srcdest.dest.path)
         return srcdest.dest
 

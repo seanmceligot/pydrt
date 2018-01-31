@@ -1,3 +1,4 @@
 pytest
 pytest-mypy
-pydantic
+pexpect
+hvac
