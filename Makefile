@@ -1,7 +1,7 @@
 .PHONY: test
 ssh: check
 	/usr/bin/pycodestyle tests/test_drt.py
-	pytest -s -k ssh
+	pytest -v -s -k ssh
 
 test: check
 	/usr/bin/pycodestyle tests/test_drt.py
@@ -15,11 +15,12 @@ watchtest:
 	when-changed -r tests make
 
 format:
+	autopep8 -i drt/pssh.py
 	autopep8 -i drt/__init__.py
 	/usr/bin/autopep8 -i tests/test_drt.py
 
 init:
-	pip install -r requirements.txt
+	sudo pip install -r requirements.txt
 
 .PHONY: check
 check:
@@ -28,5 +29,5 @@ check:
 #MYPYPATH=/usr/lib/python3.6/site-packages/ mypy --follow-imports=skip drt/__init__.py
 #MYPYPATH=/usr/lib/python3.6/site-packages/ mypy --follow-imports=skip tests/test_drt.py
 #MYPYPATH=/usr/lib/python3.6/site-packages/  mypy --ignore-missing-imports drt/ tests/ | grep -v site-p
-	MYPYPATH=/usr/lib/python3.6/site-packages/  mypy --follow-imports=skip --strict tests/test_drt.py  drt/__init__.py
+	MYPYPATH=/usr/lib/python3.6/site-packages/  mypy --follow-imports=skip --strict drt/pssh.py tests/test_drt.py  drt/__init__.py
 

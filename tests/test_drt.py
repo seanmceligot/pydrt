@@ -3,6 +3,7 @@
 import drt
 
 from drt import LocalFile
+from drt import pssh
 import unittest
 import json
 import pickle
@@ -10,6 +11,8 @@ from pyannotate_runtime import collect_types
 import subprocess
 import pexpect
 from pexpect.popen_spawn import PopenSpawn
+
+from typing import List, Set, Dict, Tuple, Optional, Any
 
 
 class BasicTestSuite(unittest.TestCase):
@@ -48,39 +51,16 @@ class BasicTestSuite(unittest.TestCase):
 #        with collect_types.collect():
 #            self._test_text_file()
 #        collect_types.dump_stats('type_info.json')
-# class Ssh():
-#    def connect():
 
     def test_ssh(self) -> None:
-        # ssh = Ssh()
-        # p = Popen(['ssh', '-o', 'PreferredAuthentications=password', '-o', 'PubkeyAuthentication=no', 'localhost'], stdout=subprocess.PIPE, stdin=subprocess.PIPE)
-        # p = PopenSpawn(['ssh', '-o', 'PreferredAuthentications=password', '-o', 'PubkeyAuthentication=no', 'localhost'], timeout=5)
-        transport = drt.LocalTransport()
-        passwd = transport.readfile(drt.File(path=".pass"))
-        args = ['-v', '-o', 'PreferredAuthentications=password', '-o', 'PubkeyAuthentication=no', 'localhost', 'bash', '--norc']
-        cmd = 'ssh'
-        print(f'{cmd} {" ".join(args)}')
-        p = pexpect.spawn('ssh', args, timeout=5)
+        ssh = pssh.PSsh()
+        ssh.connect()
         try:
-            print("wait for password:")
-            p.expect(b"password:")
-            print("get password:")
-            p.send(passwd.text)
-            p.send("\n")
-            print("sent password:")
-            p.expect("debug1: Sending command: bash")
-            p.send(b'ls -l\n')
-            print(p.read())
-            p.send(b'exit\n')
-            p.expect(pexpect.EOF)
-        except Exception as e:
-            print(e)
-            p.kill(9)
-        try:
-            p.interact()
-        except Exception as e:
-            print(e)
-            p.kill(9)
+            result = ssh.run("ls", ["-l", "/home/sean"])
+            print(json.dumps(result, indent=2))
+            ssh.close()
+        finally:
+            ssh.kill()
 
 #     def expect(self):
 #         index = p.expect(['good', 'bad', pexpect.EOF, pexpect.TIMEOUT])

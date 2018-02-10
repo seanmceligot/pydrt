@@ -3,10 +3,23 @@ import subprocess
 import shutil
 import enum
 
-from typing import List, Set, Dict, Tuple, Optional
+from typing import List, Set, Dict, Tuple, Optional, Any
 from typing import NamedTuple
 
 from typing import Union
+
+import subprocess
+import pexpect
+from pathlib import Path
+
+import paramiko
+from drt._secrets import id_rsa_passwd
+
+
+class KeyPair(NamedTuple):
+    priv: Path
+    pub: Path
+    sec: str
 
 
 class File(NamedTuple):
@@ -53,6 +66,8 @@ class DiffResult(NamedTuple):
 
 
 class LocalTransport(Transport):
+    def hostname(self) -> str:
+        return "localhost"
 
     def run(self, command: str, args: List[str]) -> ExecResult:
         cmdargs: List[str] = list(map(str, [command] + args))
@@ -69,9 +84,7 @@ class LocalTransport(Transport):
         errs = errs.decode('utf-8')
         r = {'args': " ".join(args), 'returncode': proc.returncode,
              'stderr': errs, 'stdout': outs}
-        print("type stdout", type(r['stdout']))
         print("stdout", r['stdout'])
-        print("dir stderr", type(r['stderr']))
         print("stderr", r['stderr'])
         # print("r", json.dumps(r, indent=2))
         return ExecResult(**r)
