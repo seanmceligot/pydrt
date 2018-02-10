@@ -13,13 +13,7 @@ import pexpect
 from pathlib import Path
 
 import paramiko
-from drt._secrets import id_rsa_passwd
-
-
-class KeyPair(NamedTuple):
-    priv: Path
-    pub: Path
-    sec: str
+from abc import ABCMeta, abstractmethod
 
 
 class File(NamedTuple):
@@ -31,10 +25,6 @@ class RemoteFile(File):
 
 
 class LocalFile(File):
-    pass
-
-
-class Transport():
     pass
 
 
@@ -65,8 +55,68 @@ class DiffResult(NamedTuple):
     diff: Optional[ExecResult]
 
 
+class Credentials(metaclass=ABCMeta):
+    @abstractmethod
+    def get_username(self) -> str:
+        pass
+
+
+class KeyPair(Credentials):
+    key: paramiko.RSAKey
+    username: str
+
+    def __init__(self, priv: Path, id_rsa_passwd: str, username: str) -> None:
+        self.key = paramiko.RSAKey.from_private_key_file(priv, id_rsa_passwd)
+        self.username = username
+
+    def get_username(self) -> str:
+        return self.username
+
+
+class UserNamePassword(Credentials):
+    username: str
+    password: str
+
+    def get_username(self) -> str:
+        return self.username
+
+    def get_password(self) -> str:
+        return self.password
+
+
+class Transport(metaclass=ABCMeta):
+
+    @abstractmethod
+    def get_hostname(self) -> str:
+        pass
+
+    @abstractmethod
+    def run(self, command: str, args: List[str]) -> ExecResult:
+        pass
+
+    @abstractmethod
+    def to_remote_file(self, lfile: File) -> RemoteFile:
+        pass
+
+    @abstractmethod
+    def readfile(self, path: File) -> Text:
+        pass
+
+    @abstractmethod
+    def createfile(self, text: Text, dest: LocalFile) -> None:
+        pass
+
+    @abstractmethod
+    def copy(self, srcdest: SrcDest) -> LocalFile:
+        pass
+
+    @abstractmethod
+    def diff(self, r1: File, r2: File) -> DiffResult:
+        pass
+
+
 class LocalTransport(Transport):
-    def hostname(self) -> str:
+    def get_hostname(self) -> str:
         return "localhost"
 
     def run(self, command: str, args: List[str]) -> ExecResult:
@@ -96,10 +146,9 @@ class LocalTransport(Transport):
         with open(path.path, "r") as f:
             return Text(text=f.read())
 
-    def createfile(self, text: Text, dest: LocalFile) -> LocalFile:
+    def createfile(self, text: Text, dest: LocalFile) -> None:
         with open(dest.path, "w") as f:
             print(text.text, file=f)
-        return dest
 
     def copy(self, srcdest: SrcDest) -> LocalFile:
         shutil.copyfile(srcdest.src.path, srcdest.dest.path)

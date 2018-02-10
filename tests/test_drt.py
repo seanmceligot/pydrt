@@ -11,7 +11,8 @@ from pyannotate_runtime import collect_types
 import subprocess
 import pexpect
 from pexpect.popen_spawn import PopenSpawn
-
+from drt._secrets import id_rsa_passwd
+from pathlib import Path
 from typing import List, Set, Dict, Tuple, Optional, Any
 
 
@@ -53,10 +54,12 @@ class BasicTestSuite(unittest.TestCase):
 #        collect_types.dump_stats('type_info.json')
 
     def test_ssh(self) -> None:
-        ssh = pssh.PSsh()
+        priv = Path.home() / ".ssh" / "id_rsa"
+        ssh = pssh.PsshTransport(
+            "localhost", drt.KeyPair(priv, id_rsa_passwd, "sean"))
         ssh.connect()
         try:
-            result = ssh.run("ls", ["-l", "/home/sean"])
+            result = ssh.run("echo", ["hello", "PsshTransport"])
             print(json.dumps(result, indent=2))
             ssh.close()
         finally:

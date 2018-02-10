@@ -1,8 +1,7 @@
 
 class Ssh():
-    def connect(self) -> None:
+    def connect(self, passwd) -> None:
         transport = LocalTransport()
-        passwd = transport.readfile(File(path=".pass"))
         args = ['-v', '-o', 'PreferredAuthentications=password', '-o',
                 'PubkeyAuthentication=no', 'localhost', 'bash', '--norc']
         cmd = 'ssh'
@@ -11,7 +10,7 @@ class Ssh():
         print("wait for password:")
         self.proc.expect(b"password:")
         print("get password:")
-        self.proc.send(passwd.text)
+        self.proc.send(passwd)
         self.proc.send("\n")
         print("sent password:")
         self.proc.expect("debug1: Sending command: bash")
