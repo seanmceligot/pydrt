@@ -13,14 +13,32 @@ import pexpect
 from pexpect.popen_spawn import PopenSpawn
 from drt._secrets import id_rsa_passwd
 from pathlib import Path
-from typing import List, Set, Dict, Tuple, Optional, Any
+from typing import List, Set, Dict, Tuple, Optional, Any, Iterator
+from contextlib import contextmanager
+
+
+@contextmanager
+def psshconnection() -> Iterator[pssh.PsshTransport]:
+    priv = Path.home() / ".ssh" / "id_rsa"
+    ssh = pssh.PsshTransport(
+        "localhost", drt.KeyPair(priv, id_rsa_passwd, "sean"))
+    ssh.connect()
+    try:
+        yield ssh
+        ssh.close()
+    finally:
+        ssh.kill()
 
 
 class BasicTestSuite(unittest.TestCase):
     """Basic test cases."""
 
     def test_create(self) -> None:
-        transport = drt.LocalTransport()
+        self.create(drt.LocalTransport())
+        with psshconnection() as ssh:
+            self.create(ssh)
+
+    def create(self, transport: drt.Transport) -> None:
         input = drt.SrcDest(src=LocalFile(
             path="/tmp/create_test.txt"), dest=LocalFile(path="/tmp/does_not_exist.txt"))
         out = transport.diff(input.src, input.dest)
@@ -28,7 +46,11 @@ class BasicTestSuite(unittest.TestCase):
         assert out.result == drt.Action.Create
 
     def test_path(self) -> None:
-        transport = drt.LocalTransport()
+        self.path(drt.LocalTransport())
+        with psshconnection() as ssh:
+            self.path(ssh)
+
+    def path(self, transport: drt.Transport) -> None:
         input = drt.SrcDest(src=LocalFile(
             path="/tmp/create_test.txt"), dest=LocalFile(path="/tmp/test.txt"))
         transport.createfile(drt.Text(text="one\ntwo"), input.src)
@@ -47,6 +69,7 @@ class BasicTestSuite(unittest.TestCase):
         print(json.dumps(out, indent=2))
         assert out.result == drt.Action.Done
 
+
 #    def _test_pyannotate(self):
 #        collect_types.init_types_collection()
 #        with collect_types.collect():
@@ -54,16 +77,9 @@ class BasicTestSuite(unittest.TestCase):
 #        collect_types.dump_stats('type_info.json')
 
     def test_ssh(self) -> None:
-        priv = Path.home() / ".ssh" / "id_rsa"
-        ssh = pssh.PsshTransport(
-            "localhost", drt.KeyPair(priv, id_rsa_passwd, "sean"))
-        ssh.connect()
-        try:
+        with psshconnection() as ssh:
             result = ssh.run("echo", ["hello", "PsshTransport"])
             print(json.dumps(result, indent=2))
-            ssh.close()
-        finally:
-            ssh.kill()
 
 #     def expect(self):
 #         index = p.expect(['good', 'bad', pexpect.EOF, pexpect.TIMEOUT])

@@ -1,11 +1,12 @@
 .PHONY: test
-ssh: check
-	/usr/bin/pycodestyle tests/test_drt.py
-	pytest -v -s -k ssh
 
 test: check
 	/usr/bin/pycodestyle tests/test_drt.py
 	pytest -s
+
+ssh: check
+	/usr/bin/pycodestyle tests/test_drt.py
+	pytest -v -s -k ssh
 
 watch:
 	#when-changed -r drt make
@@ -25,9 +26,6 @@ init:
 .PHONY: check
 check:
 	pycodestyle drt/__init__.py
-#MYPYPATH=/usr/lib/python3.6/site-packages/ mypy --ignore-missing-imports --follow-imports=skip --strict-optional  drt/ tests/
-#MYPYPATH=/usr/lib/python3.6/site-packages/ mypy --follow-imports=skip drt/__init__.py
-#MYPYPATH=/usr/lib/python3.6/site-packages/ mypy --follow-imports=skip tests/test_drt.py
-#MYPYPATH=/usr/lib/python3.6/site-packages/  mypy --ignore-missing-imports drt/ tests/ | grep -v site-p
+	pycodestyle drt/pssh.py
 	MYPYPATH=/usr/lib/python3.6/site-packages/  mypy --follow-imports=skip --strict drt/pssh.py tests/test_drt.py  drt/__init__.py
 

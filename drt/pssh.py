@@ -30,22 +30,22 @@ def shell(client: paramiko.SSHClient, cmdargs: List[str]) -> drt.ExecResult:
     while not chan.exit_status_ready():
         while chan.recv_ready():
             r = chan.recv(1024)
-            #print(f"type r {type(r)}")
+            # print(f"type r {type(r)}")
             out.write(r.decode('utf-8'))
-            #print(f"out now {out.getvalue()}")
+            # print(f"out now {out.getvalue()}")
         while chan.recv_stderr_ready():
             r = chan.recv_stderr(1024)
-            #print(f"type r {type(r)}")
+            # print(f"type r {type(r)}")
             err.write(r.decode('utf-8'))
     retcode = chan.recv_exit_status()
     while chan.recv_ready():
         r = chan.recv(1024)
-        #print(f"type r {type(r)}")
+        # print(f"type r {type(r)}")
         out.write(r.decode('utf-8'))
-        #print(f"out now {out.getvalue()}")
+        # print(f"out now {out.getvalue()}")
     while chan.recv_stderr_ready():
         r = chan.recv_stderr(1024)
-        #print(f"type r {type(r)}")
+        # print(f"type r {type(r)}")
         err.write(r.decode('utf-8'))
     chan.close()
     args = ' '.join(cmdargs)
@@ -88,7 +88,7 @@ class PsshTransport(drt.Transport):
 
     def close(self) -> None:
         if self.client:
-            self.client.close() 
+            self.client.close()
         self.client = None
 
     def kill(self) -> None:
@@ -104,9 +104,10 @@ class PsshTransport(drt.Transport):
                 return drt.Text(text=data)
 
     def createfile(self, text: drt.Text, dest: drt.LocalFile) -> None:
+        print(f'createfile {text.text}')
         with self.client.open_sftp() as sftp:
             with sftp.file(dest.path, "w", -1) as f:
-                f.write(text)
+                f.write(text.text)
 
     def copy(self, srcdest: drt.SrcDest) -> drt.LocalFile:
         shutil.copyfile(srcdest.src.path, srcdest.dest.path)
