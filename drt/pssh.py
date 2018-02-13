@@ -64,6 +64,9 @@ class PsshTransport(drt.Transport):
         self.cred = cred
         self.client = paramiko.SSHClient()
 
+    def id(self) -> Tuple:
+        return (type(self).__name__, self.hostname, self.cred.id())
+
     def get_hostname(self) -> str:
         return self.hostname
 

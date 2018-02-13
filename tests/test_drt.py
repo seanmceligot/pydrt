@@ -22,6 +22,7 @@ def psshconnection() -> Iterator[pssh.PsshTransport]:
     priv = Path.home() / ".ssh" / "id_rsa"
     ssh = pssh.PsshTransport(
         "localhost", drt.KeyPair(priv, id_rsa_passwd, "sean"))
+    print("ssh id:", json.dumps(ssh.id(), indent=2))
     ssh.connect()
     try:
         yield ssh
@@ -69,7 +70,11 @@ class BasicTestSuite(unittest.TestCase):
         print(json.dumps(out, indent=2))
         assert out.result == drt.Action.Done
 
-
+    def test_multi(self) -> None:
+        t1 = drt.LocalTransport()
+        with psshconnection() as t2:
+            fname1 = "/etc/syslog-ng/syslog-ng.conf.pacnew"
+            fname2 = "/etc/syslog-ng/syslog-ng.conf.pacsave"
 #    def _test_pyannotate(self):
 #        collect_types.init_types_collection()
 #        with collect_types.collect():

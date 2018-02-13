@@ -57,7 +57,7 @@ class DiffResult(NamedTuple):
 
 class Credentials(metaclass=ABCMeta):
     @abstractmethod
-    def get_username(self) -> str:
+    def id(self) -> Tuple:
         pass
 
 
@@ -68,17 +68,18 @@ class KeyPair(Credentials):
     def __init__(self, priv: Path, id_rsa_passwd: str, username: str) -> None:
         self.key = paramiko.RSAKey.from_private_key_file(priv, id_rsa_passwd)
         self.username = username
+        self.priv = priv
 
-    def get_username(self) -> str:
-        return self.username
+    def id(self) -> Tuple:
+        return (type(self).__name__, self.username, str(self.priv))
 
 
 class UserNamePassword(Credentials):
     username: str
     password: str
 
-    def get_username(self) -> str:
-        return self.username
+    def id(self) -> Tuple:
+        return (type(self).__name__, self.username)
 
     def get_password(self) -> str:
         return self.password
@@ -114,10 +115,18 @@ class Transport(metaclass=ABCMeta):
     def diff(self, r1: File, r2: File) -> DiffResult:
         pass
 
+    @abstractmethod
+    def id(self) -> Tuple:
+        pass
+
 
 class LocalTransport(Transport):
     def get_hostname(self) -> str:
         return "localhost"
+
+    def id(self) -> Tuple:
+        t = (type(self).__name__, "localhost")
+        return t
 
     def run(self, command: str, args: List[str]) -> ExecResult:
         cmdargs: List[str] = list(map(str, [command] + args))
