@@ -3,3 +3,5 @@ pytest-mypy
 pexpect
 hvac
 paramiko
+pickledb
+prompt_toolkit

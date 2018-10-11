@@ -1,5 +1,11 @@
 .PHONY: test
 
+c:
+	autopep8 -i drt/create-ssh-connection.py
+	pycodestyle drt/create-ssh-connection.py
+	python3 drt/create-ssh-connection.py local password
+
+
 test: check
 	pycodestyle tests/test_drt.py
 	pytest -s
