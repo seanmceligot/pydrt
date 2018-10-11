@@ -1,7 +1,7 @@
 .PHONY: test
 
 test: check
-	/usr/bin/pycodestyle tests/test_drt.py
+	pycodestyle tests/test_drt.py
 	pytest -s
 
 ssh: check
@@ -27,5 +27,5 @@ init:
 check:
 	pycodestyle drt/__init__.py
 	pycodestyle drt/pssh.py
-	MYPYPATH=/usr/lib/python3.6/site-packages/  mypy --follow-imports=skip --strict drt/pssh.py tests/test_drt.py  drt/__init__.py
+	MYPYPATH=/usr/lib/python3.6/site-packages/  mypy --ignore-missing-imports  --follow-imports=skip --strict drt/pssh.py tests/test_drt.py  drt/__init__.py
 
